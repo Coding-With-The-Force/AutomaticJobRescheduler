@@ -27,30 +27,36 @@ public with sharing class Repeating_Scheduler_Example implements Schedulable
 	*/
 	private void findAndAbortJob(SchedulableContext cont)
 	{
-		if (cont != null)
+		if (cont == null)
 		{
-			//Need to query CronJobDetail to find our currently active scheduled job
-			List<CronJobDetail> cronDetail = [SELECT Id FROM CronJobDetail WHERE Name= :JOB_NAME LIMIT 1];
+			return;
+		}
 
-			if (!cronDetail.isEmpty())
-			{
-				//Need to find the corresponding cron trigger to be able to abort the scheduled job
-				List<CronTrigger> cronTriggers = [SELECT Id FROM CronTrigger WHERE CronJobDetailId = :cronDetail[0].Id];
+		//Need to query CronJobDetail to find our currently active scheduled job
+		List<CronJobDetail> cronDetail = [SELECT Id FROM CronJobDetail WHERE Name= :JOB_NAME LIMIT 1];
 
-				if(!cronTriggers.isEmpty())
-				{
-					try
-					{
-						//Aborts the job current setup for this scheduled class
-						System.abortJob(cronTriggers[0].Id);
-						rescheduleJob();
-					}
-					catch (Exception e)
-					{
-						System.debug('This was the error ::: ' + e.getMessage());
-					}
-				}
-			}
+		if (cronDetail.isEmpty())
+		{
+			return;
+		}
+
+		//Need to find the corresponding cron trigger to be able to abort the scheduled job
+		List<CronTrigger> cronTriggers = [SELECT Id FROM CronTrigger WHERE CronJobDetailId = :cronDetail[0].Id];
+
+		if(cronTriggers.isEmpty())
+		{
+			return;
+		}
+
+		try
+		{
+			//Aborts the job current setup for this scheduled class
+			System.abortJob(cronTriggers[0].Id);
+			rescheduleJob();
+		}
+		catch (Exception e)
+		{
+			System.debug('This was the error ::: ' + e.getMessage());
 		}
 	}
 
